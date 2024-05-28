@@ -62,6 +62,8 @@ static Position LampPositions[NEOPIXEL_COUNT] = {
 #define KEY10                       10
 #define KEY11                       11
 #define KEY12                       12
+#define ROTUP                       13
+#define ROTDOWN                     14
 
 inline uint16_t LampIdToKey(uint16_t lampId) {
     // Keys start at GPIO 1, whereas LampArray starts at 0

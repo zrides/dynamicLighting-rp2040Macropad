@@ -74,6 +74,7 @@ bool keyboardTimerCallback(struct repeating_timer *t) {
     } 
     else if (tud_hid_ready()) {
         sendKeyboardReport();
+        sendConsumerReport();
     }
 
     return true;

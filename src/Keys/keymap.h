@@ -7,15 +7,15 @@
 #include "tusb.h"
 
 typedef struct {
-    hid_keyboard_report_t macros[13];
+    hid_keyboard_report_t macros[15];
 } MacroLayer;
 
 static const MacroLayer layers[] = {
     // Layer 0
     {{
         {KEYBOARD_MODIFIER_LEFTGUI, 0, {0, 0, 0, 0, 0, 0}},                         // Rotary Encoder
-        {0, 0,                         {HID_KEY_7, 0, 0, 0, 0, 0}},                 // Key 1
-        {0, 0,                         {HID_KEY_8, 0, 0, 0, 0, 0}},                 // Key 2
+        {0, 0,                         {HID_KEY_VOLUME_UP, 0, 0, 0, 0, 0}},                 // Key 1
+        {0, 0,                         {HID_KEY_VOLUME_DOWN, 0, 0, 0, 0, 0}},                 // Key 2
         {0, 0,                         {HID_KEY_9, 0, 0, 0, 0, 0}},                 // Key 3
         {0, 0,                         {HID_KEY_4, 0, 0, 0, 0, 0}},                 // Key 4
         {0, 0,                         {HID_KEY_5, 0, 0, 0, 0, 0}},                 // Key 5
@@ -25,11 +25,13 @@ static const MacroLayer layers[] = {
         {0, 0,                         {HID_KEY_3, 0, 0, 0, 0, 0}},                 // Key 9
         {0, 0,                         {HID_KEY_KEYPAD_DECIMAL, 0, 0, 0, 0, 0}},    // Key 10
         {0, 0,                         {HID_KEY_0, 0, 0, 0, 0, 0}},                 // Key 11
-        {0, 0,                         {HID_KEY_KEYPAD_ENTER, 0, 0, 0, 0, 0}}       // Key 12
+        {0, 0,                         {HID_KEY_KEYPAD_ENTER, 0, 0, 0, 0, 0}},       // Key 12
+        {0, 0,                         {HID_KEY_VOLUME_UP, 0, 0, 0, 0, 0}},      // Rotary UP
+        {0, 0,                         {HID_KEY_VOLUME_DOWN, 0, 0, 0, 0, 0}}     // ROTARY DOWN
     }},
     // Layer 1
     {{
-        {0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0},

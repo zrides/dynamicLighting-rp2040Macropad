@@ -6,7 +6,9 @@
 
 void initKeys();
 void sendKeyboardReport();
+void sendConsumerReport();
 
 void updateCurrentLayer(int amount);
+void updateVolume(int dir);
 
 #endif

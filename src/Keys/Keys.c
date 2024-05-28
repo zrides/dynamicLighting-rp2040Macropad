@@ -10,6 +10,10 @@
 #include "../util.h"
 
 static int8_t currentLayer;
+static int8_t currentVolumeState = 0; // 1 -- increase vol 
+                                  // -1 -- decrease vol
+                                  // 0 -- no change
+static bool has_consumer_key = false;
 
 void initKeys() {
     // Set Pull up resistors for key GPIOs
@@ -33,6 +37,7 @@ void initKeys() {
 void sendKeyboardReport() {
     hid_keyboard_report_t keyState = {0};
     static bool hasSentMacro = false;
+    static bool hasSentConsumerKey = false;
 
     if (!gpio_get(ROT_BTN)) {
         memcpy(
@@ -112,6 +117,20 @@ void sendKeyboardReport() {
             &layers[currentLayer].macros[KEY12],
             sizeof(hid_keyboard_report_t));
     }
+    // else if (currentVolumeState == 1){
+    //     memcpy(
+    //         &keyState, 
+    //         &layers[currentLayer].macros[ROTUP],
+    //         sizeof(hid_keyboard_report_t));
+    //     currentVolumeState = 0;
+    // }
+    // else if (currentVolumeState == -1){
+    //     memcpy(
+    //         &keyState, 
+    //         &layers[currentLayer].macros[ROTDOWN],
+    //         sizeof(hid_keyboard_report_t));
+    //     currentVolumeState = 0;
+    // }
 
     if (keyState.modifier != 0 || keyState.keycode[0] != 0) {
         tud_hid_keyboard_report(
@@ -128,7 +147,43 @@ void sendKeyboardReport() {
     }
 }
 
+void sendConsumerReport(){
+    if (currentVolumeState == -1)
+    {
+        // Counter clockwise
+        uint16_t volume_down = HID_USAGE_CONSUMER_VOLUME_DECREMENT;
+        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &volume_down, 2);
+        has_consumer_key = true;
+        currentVolumeState = 0;
+    }
+    else if (currentVolumeState == 1){
+        // Clockwise
+        uint16_t volume_up = HID_USAGE_CONSUMER_VOLUME_INCREMENT;
+        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &volume_up, 2);
+        has_consumer_key = true;
+        currentVolumeState = 0;
+    }
+    else {
+        uint16_t empty_key = 0;
+        if (has_consumer_key) tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty_key, 2);
+        has_consumer_key = false;
+    }
+}
+
 void updateCurrentLayer(int amount) {
     currentLayer += amount;
     currentLayer %= NUM_LAYERS;
+}
+
+void updateVolume(int dir){
+
+    if (dir == -1)
+    {
+        // Counter clockwise
+        currentVolumeState = -1;
+    }
+    else if (dir == 1)
+    {
+        currentVolumeState = 1;
+    }
 }

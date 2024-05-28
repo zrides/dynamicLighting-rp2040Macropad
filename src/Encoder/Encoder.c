@@ -28,14 +28,13 @@ void initEncoder() {
 
 void onRisingEdge(uint gpio, uint32_t eventMask) {
     if (eventMask & GPIO_IRQ_EDGE_FALL) {
-        hid_keyboard_report_t keyState = {0};
         if (gpio_get(ROTB)) {
             // Counter clockwise
-            updateCurrentLayer(-1);
+            updateVolume(-1);
         }
         else {
             // Clockwise
-            updateCurrentLayer(1);
+            updateVolume(1);
         }
     }
 }
