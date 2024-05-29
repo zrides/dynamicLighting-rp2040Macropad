@@ -20,6 +20,7 @@ target_sources(macropad PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/Encoder/Encoder.c
     ${CMAKE_CURRENT_LIST_DIR}/Lighting/Neopixel.c
     ${CMAKE_CURRENT_LIST_DIR}/Lighting/LampArray.c
+    ${CMAKE_CURRENT_LIST_DIR}/OLED/oled.c
     )
 
 target_include_directories(macropad PUBLIC
@@ -32,6 +33,7 @@ target_link_libraries(macropad PUBLIC
     hardware_pio
     tinyusb_device
     tinyusb_board
+    hardware_spi
     )
 
 pico_add_extra_outputs(macropad)

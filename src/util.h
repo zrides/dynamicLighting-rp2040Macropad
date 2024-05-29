@@ -10,6 +10,7 @@
 #define LAMPARRAY_UPDATE_INTERVAL   10000                               // 10 ms update interval, in us
 #define LAMP_UPDATE_RATE_MS         LAMPARRAY_UPDATE_INTERVAL / 1000
 #define KEY_POLLING_RATE            10                                  // 10 ms polling rate
+#define OLED_POLLING_RATE           50
 
 // Rotary Encoder
 #define ROT_BTN                     0
@@ -38,7 +39,7 @@
 #define LAMPARRAY_LAMP_COUNT        NEOPIXEL_COUNT
 #define LAMPARRAY_WIDTH             59000    // 5.9 cm 
 #define LAMPARRAY_HEIGHT            104000   // 10.4 cm
-#define LAMPARRAY_DEPTH             25000    // 2.5 cm (including rotary encoder)
+#define LAMPARRAY_DEPTH             25000    // 2.5 cm (including rotar y encoder)
 #define LAMPARRAY_KIND              1        // LampArrayKindKeyboard
 
 // Lamp Attributes

@@ -8,6 +8,8 @@
 #include "keymap.h"
 #include "../usb_descriptors.h"
 #include "../util.h"
+#include "OLED/oled.h"
+#include "OLED/pi_img.h"
 
 static int8_t currentLayer;
 static int8_t currentVolumeState = 0; // 1 -- increase vol 

@@ -17,20 +17,25 @@
 #include "Lighting/Neopixel.h"
 #include "Lighting/LampArray.h"
 #include "Lighting/LampArrayHidStructs.h"
+#include "OLED/oled.h"
+#include "OLED/pi_img.h"
 
 // Functions
 bool lightingTimerCallback(struct repeating_timer* t);
 bool keyboardTimerCallback(struct repeating_timer* t);
+bool oledTimerCallback(struct repeating_timer* t);
 
 int main() {
     stdio_init_all();
     tusb_init();
     initKeys();
     initEncoder();
+    sh1106_init();
     NeopixelInit(AUTONOMOUS_LIGHTING_EFFECT, AUTONOMOUS_LIGHTING_COLOR);
-    
+
     struct repeating_timer lightingTimer;
     struct repeating_timer keyboardTimer;
+    struct repeating_timer oledTimer;
 
     // Set up timer interrupts
     add_repeating_timer_ms(
@@ -45,13 +50,20 @@ int main() {
         NULL,                   // No user data needed
         &keyboardTimer);        // Timer object
 
+    add_repeating_timer_ms(
+        OLED_POLLING_RATE,       // Polling rate display
+        oledTimerCallback,  // Callback to update oled display
+        NULL,                   // No user data needed
+        &oledTimer);        // Timer object
+
     while (1) { 
         tud_task();
     }
 
     cancel_repeating_timer(&lightingTimer);
     cancel_repeating_timer(&keyboardTimer);
-    
+    cancel_repeating_timer(&oledTimer);
+
     return 0;
 }
 
@@ -77,6 +89,11 @@ bool keyboardTimerCallback(struct repeating_timer *t) {
         sendConsumerReport();
     }
 
+    return true;
+}
+
+bool oledTimerCallback(struct repeating_timer* t){
+    sh1106_update_display();
     return true;
 }
 
