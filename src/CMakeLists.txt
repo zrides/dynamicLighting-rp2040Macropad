@@ -34,6 +34,7 @@ target_link_libraries(macropad PUBLIC
     tinyusb_device
     tinyusb_board
     hardware_spi
+    hardware_dma
     )
 
 pico_add_extra_outputs(macropad)

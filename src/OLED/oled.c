@@ -1,25 +1,18 @@
-/**
- * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include "pico/stdlib.h"
-
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
-#include "../util.h"
+#include "hardware/dma.h"
 #include "pi_img.h"
+#include "../util.h"
 
 #define SH1106_HEIGHT              64
 #define SH1106_WIDTH               138
 
 #define SH1106_SPI_PORT spi1
-
 
 // SH1106 commands
 #define SH1106_SET_CONTRAST 0x81
@@ -52,6 +45,13 @@ static uint8_t x = (SH1106_WIDTH - img_width) / 2;
 static uint8_t y = (SH1106_HEIGHT / 8 - img_height / 8) / 2;
 static int8_t x_dir = 1;
 static int8_t y_dir = 1;
+
+static uint8_t frame_buffer1[SH1106_WIDTH * (SH1106_HEIGHT / 8)];
+static uint8_t frame_buffer2[SH1106_WIDTH * (SH1106_HEIGHT / 8)];
+static uint8_t *current_frame_buffer = frame_buffer1;
+static uint8_t *next_frame_buffer = frame_buffer2;
+
+static int dma_chan;
 
 static inline void gpio_init_and_set(uint gpio, bool value) {
     gpio_init(gpio);
@@ -100,6 +100,14 @@ void sh1106_init() {
     gpio_put(OLED_DC, 0); // Command mode
     spi_write_blocking(SH1106_SPI_PORT, init_seq, sizeof(init_seq));
     gpio_put(OLED_CS, 1);
+
+    // Initialize DMA
+    dma_chan = dma_claim_unused_channel(true);
+    dma_channel_config c = dma_channel_get_default_config(dma_chan);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8); // Set transfer size to 8 bits
+    channel_config_set_read_increment(&c, true);           // Enable read increment
+    channel_config_set_write_increment(&c, false);         // Disable write increment
+    dma_channel_configure(dma_chan, &c, &spi_get_hw(SH1106_SPI_PORT)->dr, NULL, SH1106_WIDTH * (SH1106_HEIGHT / 8), false);
 }
 
 void sh1106_write_command(uint8_t command) {
@@ -112,42 +120,53 @@ void sh1106_write_command(uint8_t command) {
 void sh1106_write_data(uint8_t *data, size_t size) {
     gpio_put(OLED_CS, 0);
     gpio_put(OLED_DC, 1); // Data mode
-    spi_write_blocking(SH1106_SPI_PORT, data, size);
+    dma_channel_transfer_from_buffer_now(dma_chan, data, size);
+    dma_channel_wait_for_finish_blocking(dma_chan);
     gpio_put(OLED_CS, 1);
 }
 
-void sh1106_clear_display() {
-    for (uint8_t page = 0; page < (SH1106_HEIGHT / 8); page++) {
-        sh1106_write_command(0xB0 + page);  // Set page address
-        sh1106_write_command(SH1106_SET_LOW_COLUMN);  // Set lower column start address
-        sh1106_write_command(SH1106_SET_HIGH_COLUMN);  // Set higher column start address
-
-        uint8_t clear_data[SH1106_WIDTH] = {0};
-        sh1106_write_data(clear_data, SH1106_WIDTH);
-    }
+void sh1106_clear_frame_buffer(uint8_t *buffer) {
+    memset(buffer, 0, SH1106_WIDTH * (SH1106_HEIGHT / 8));
 }
 
-void sh1106_render_image(uint8_t *image, uint8_t width, uint8_t height, uint8_t start_column, uint8_t start_page) {
+void sh1106_render_image_to_buffer(uint8_t *buffer, uint8_t *image, uint8_t width, uint8_t height, uint8_t start_column, uint8_t start_page) {
     for (uint8_t page = 0; page < (height / 8); page++) {
-        sh1106_write_command(0xB0 + start_page + page);  // Set page address
-        sh1106_write_command(start_column & 0x0F);  // Set lower column start address
-        sh1106_write_command(0x10 | (start_column >> 4));  // Set higher column start address
-
-        sh1106_write_data(&image[page * width], width);
+        uint8_t *page_start = buffer + (start_page + page) * SH1106_WIDTH + start_column;
+        memcpy(page_start, &image[page * width], width);
     }
 }
 
 void sh1106_update_display() {
-    sh1106_clear_display();
-    sh1106_render_image(raspberry26x32, img_width, img_height, x, y);
+    // Clear the next frame buffer
+    sh1106_clear_frame_buffer(next_frame_buffer);
 
+    // Render the image to the next frame buffer
+    sh1106_render_image_to_buffer(next_frame_buffer, raspberry26x32, img_width, img_height, x, y);
+
+    // Update the position of the image
     x += x_dir;
     y += y_dir;
 
+    // Check for boundary collisions and reverse direction if needed
     if (x <= 0 || x >= (SH1106_WIDTH - img_width)) {
         x_dir = -x_dir;
     }
     if (y <= 0 || y >= (SH1106_HEIGHT / 8 - img_height / 8)) {
         y_dir = -y_dir;
+    }
+
+    // Swap buffers
+    uint8_t *temp = current_frame_buffer;
+    current_frame_buffer = next_frame_buffer;
+    next_frame_buffer = temp;
+
+    // Send the current frame buffer to the display
+    for (uint8_t page = 0; page < (SH1106_HEIGHT / 8); page++) {
+        sh1106_write_command(0xB0 + page);  // Set page address
+        sh1106_write_command(SH1106_SET_LOW_COLUMN);  // Set lower column start address
+        sh1106_write_command(SH1106_SET_HIGH_COLUMN);  // Set higher column start address
+
+        // Use DMA to transfer the current page of the frame buffer to the display
+        sh1106_write_data(current_frame_buffer + page * SH1106_WIDTH, SH1106_WIDTH);
     }
 }

@@ -10,7 +10,7 @@
 #define LAMPARRAY_UPDATE_INTERVAL   10000                               // 10 ms update interval, in us
 #define LAMP_UPDATE_RATE_MS         LAMPARRAY_UPDATE_INTERVAL / 1000
 #define KEY_POLLING_RATE            10                                  // 10 ms polling rate
-#define OLED_POLLING_RATE           50
+#define OLED_POLLING_RATE           1
 
 // Rotary Encoder
 #define ROT_BTN                     0
