@@ -104,9 +104,9 @@ void sh1106_init() {
     // Initialize DMA
     dma_chan = dma_claim_unused_channel(true);
     dma_channel_config c = dma_channel_get_default_config(dma_chan);
-    channel_config_set_transfer_data_size(&c, DMA_SIZE_8); // Set transfer size to 8 bits
-    channel_config_set_read_increment(&c, true);           // Enable read increment
-    channel_config_set_write_increment(&c, false);         // Disable write increment
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_read_increment(&c, true);
+    channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_chan, &c, &spi_get_hw(SH1106_SPI_PORT)->dr, NULL, SH1106_WIDTH * (SH1106_HEIGHT / 8), false);
 }
 
